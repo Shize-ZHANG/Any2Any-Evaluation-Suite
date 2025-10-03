@@ -11,11 +11,16 @@ client = OpenAI(api_key="")
 # pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"  # Specify Tesseract path if needed
 # =================================
 
-def download_image(url):
-    """Download image and return PIL.Image object"""
-    response = requests.get(url)
-    response.raise_for_status()
-    return Image.open(io.BytesIO(response.content))
+def load_image(path_or_url):
+    """Load image from local path or URL and return PIL.Image object"""
+    if path_or_url.startswith('http://') or path_or_url.startswith('https://'):
+        # Download from URL
+        response = requests.get(path_or_url)
+        response.raise_for_status()
+        return Image.open(io.BytesIO(response.content))
+    else:
+        # Load from local path
+        return Image.open(path_or_url)
 
 def image_to_text(img):
     """Extract text using OCR"""
@@ -81,9 +86,9 @@ def call_4o(prompt):
     )
     return response.choices[0].message.content
 
-def main(image_url):
-    # 1. Download image
-    img = download_image(image_url)
+def main(image_path):
+    # 1. Load image (supports both local path and URL)
+    img = load_image(image_path)
 
     # 2. OCR
     text = image_to_text(img)
@@ -121,6 +126,13 @@ def main(image_url):
     print(json.dumps(result_json, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
-    # Example: Replace with your image URL
-    url = "https://raw.githubusercontent.com/Shize-ZHANG/Any2Any-Interleaved-Data-Pipline/main/original_data/document/doc_0791_01.png"
-    main(url)
+    import sys
+
+    if len(sys.argv) > 1:
+        # Use command line argument
+        image_path = sys.argv[1]
+    else:
+        # Default example (URL)
+        image_path = "https://raw.githubusercontent.com/Shize-ZHANG/Any2Any-Interleaved-Data-Pipline/main/original_data/document/doc_0791_01.png"
+
+    main(image_path)
