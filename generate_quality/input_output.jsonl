@@ -1,0 +1,48 @@
+{
+  "domain": "general_domain",
+  "subdomain": "architecture",
+  "id": "1",
+  "input": {
+    "modal": {
+      "image1": "image/img_0001_01.jpg",
+      "audio1": "audio/aud_0001_01.mp3"
+    },
+    "content": "Analyze the construction site scene depicted in the image1 and describe the workers' roles and equipment used. Ensure that your response includes both an <audio1> and an <image1> to support your explanation."
+  },
+  "output": {
+    "modal": {
+      "image2": "image/img_0001_02.png",
+      "audio2": "audio/aud_0001_02.mp3"
+    },
+    "content": "In this construction site scene, the roles and positions of the workers are illustrated, with <image2> highlighting a worker at the excavator's rear. The presence of the excavator and its interaction with the worker is essential, as noted in <audio2> for understanding the labelled annotations on the image."
+  },
+  "difficulty_level": 3,
+  "scores": {
+    "image2": null,
+    "audio2": 70.09
+  }
+}
+{
+  "domain": "general_domain",
+  "subdomain": "architecture",
+  "id": "2",
+  "input": {
+    "modal": {
+      "image1": "image/img_0002_01.jpg",
+      "audio1": "audio/aud_0002_01.mp3"
+    },
+    "content": "Examine the <image1> carefully and listen to the <audio1> to understand the scene depicted at a construction site. In the answer, be sure to include one annotated image and one audio clip to support or illustrate your explanation."
+  },
+  "output": {
+    "modal": {
+      "image2": "image/img_0002_02.jpg",
+      "audio2": "audio/aud_0002_02.mp3"
+    },
+    "content": "This illustration highlights a critical safety issue at the construction site. Observe <image2> to see the problem area marked. Pay attention to the <audio2> that explains the lack of protection for the excavation edge in the background."
+  },
+  "difficulty_level": 2,
+  "scores": {
+    "image2": null,
+    "audio2": null
+  }
+}

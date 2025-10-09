@@ -1,7 +1,8 @@
 from openai import OpenAI
+import os
 
 # ============ 配置区域 ============
-client = OpenAI(api_key="")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # 示例输入文本（你可以换成任意回答）
 answer_text = """

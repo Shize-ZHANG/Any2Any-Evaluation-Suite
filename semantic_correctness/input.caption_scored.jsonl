@@ -1,0 +1,46 @@
+[
+  {
+    "domain": "general_domain",
+    "subdomain": "architecture",
+    "id": "1",
+    "input": {
+      "modal": {
+        "image1": "image/img_0001_01.jpg",
+        "audio1": "audio/aud_0001_01.mp3"
+      },
+      "content": "Analyze the construction site scene depicted in the image1 and describe the workers' roles and equipment used. Ensure that your response includes both an <audio1> and an <image1> to support your explanation."
+    },
+    "output": {
+      "modal": {
+        "image2": "image/img_0001_02.png",
+        "audio2": "audio/aud_0001_02.mp3"
+      },
+      "content": "In this construction site scene, the roles and positions of the workers are illustrated, with <image2> highlighting a worker at the excavator's rear. The presence of the excavator and its interaction with the worker is essential, as noted in <audio2> for understanding the labelled annotations on the image.",
+      "captioned_response": "In this construction site scene, the roles and positions of the workers are illustrated, with <image2: The image shows a single apple with a smooth, glossy surface. The apple is predominantly red with streaks of yellow and orange, giving it a vibrant appearance. It has a short, dark brown stem protruding from the top. The background is transparent, indicated by the checkered pattern, which is commonly used in image editing to show transparency. The apple appears fresh and ripe, with a round, symmetrical shape.> highlighting a worker at the excavator's rear. The presence of the excavator and its interaction with the worker is essential, as noted in <audio2: [ERROR_CAPTION:Connection error.]> for understanding the labelled annotations on the image.",
+      "score": 0.6
+    },
+    "difficulty_level": 3
+  },
+  {
+    "domain": "general_domain",
+    "subdomain": "architecture",
+    "id": "2",
+    "input": {
+      "modal": {
+        "image1": "image/img_0002_01.jpg",
+        "audio1": "audio/aud_0002_01.mp3"
+      },
+      "content": "Examine the <image1> carefully and listen to the <audio1> to understand the scene depicted at a construction site. In the answer, be sure to include one annotated image and one audio clip to support or illustrate your explanation."
+    },
+    "output": {
+      "modal": {
+        "image2": "image/img_0002_02.jpg",
+        "audio2": "audio/aud_0002_02.mp3"
+      },
+      "content": "This illustration highlights a critical safety issue at the construction site. Observe <image2> to see the problem area marked. Pay attention to the <audio2> that explains the lack of protection for the excavation edge in the background.",
+      "captioned_response": "This illustration highlights a critical safety issue at the construction site. Observe <image2: [ERROR_CAPTION:[Errno 2] No such file or directory: './image/img_0002_02.jpg']> to see the problem area marked. Pay attention to the <audio2: [ERROR_CAPTION:[Errno 2] No such file or directory: './audio/aud_0002_02.mp3']> that explains the lack of protection for the excavation edge in the background.",
+      "score": 1.0
+    },
+    "difficulty_level": 2
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "domain": "general_domain",
+  "subdomain": "architecture",
+  "id": "1",
+  "output": {
+    "modal": {
+      "image2": "image/img_0001_02.png",
+      "audio2": "audio/aud_0001_02.mp3"
+    },
+    "content": "In this construction site scene, the roles and positions of the workers are illustrated, with <image2> highlighting a worker at the excavator's rear. The presence of the excavator and its interaction with the worker is essential, as noted in <audio2> for understanding the labelled annotations on the image."
+  },
+  "scores": {
+    "image2": 85.5,
+    "audio2": 78.3
+  },
+  "difficulty_level": 3
+}

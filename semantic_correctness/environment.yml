@@ -1,0 +1,62 @@
+name: caption-eval
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  # —— 基础环境 ——
+  - python=3.11
+  - pip
+  - setuptools
+  - wheel
+
+  # —— 数值/科学计算 ——
+  - numpy
+  - pandas
+  - scipy
+
+  # —— 可视化 / 表格渲染（CSV→PNG） ——
+  - matplotlib
+
+  # —— 进度条 & 实用库 ——
+  - tqdm
+  - requests
+  - pyyaml
+  - psutil
+
+  # —— PDF / 文档处理（pdf2image 需要 poppler） ——
+  - poppler
+  - pypdf
+  - cairo  # 某些 PDF 渲染路径需要（conda-forge 提供）
+  - libjpeg-turbo
+
+  # —— 深度学习（GPU版，如无GPU可删掉 pytorch-cuda 这行，并用 CPU 版 PyTorch）
+  - pytorch
+  - torchvision
+  - pytorch-cuda=12.1  # 如无NVIDIA GPU或CUDA不匹配，请删除本行
+
+  # —— 3D 处理（Open3D + 备选 trimesh） ——
+  - open3d  # 需 Python <= 3.11
+  - trimesh
+  - shapely
+  - networkx
+
+  # —— 多媒体（可选，但某些场景会用到） ——
+  - ffmpeg
+
+  # —— Transformers 生态 ——
+  - transformers
+  - tokenizers
+  - accelerate
+
+  # —— OpenAI 官方 SDK（用于 GPT-4o 评分与 image/doc caption）
+  - pip:
+      - openai>=1.0.0
+      - pdf2image
+      - pdfminer.six
+      # PointLLM（从GitHub安装，确保包含 pointllm.* 模块）
+      # - git+https://github.com/OpenGVLab/PointLLM.git
+      # 你若使用 vLLM 作为服务端，这里不需要额外客户端包；
+      # 我们用 openai SDK 访问 vLLM 的 OpenAI-compatible endpoint。

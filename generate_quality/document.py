@@ -5,9 +5,10 @@ from openai import OpenAI
 import io
 import json
 import re
+import os
 
 # ============ Configuration Area ============
-client = OpenAI(api_key="")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"  # Specify Tesseract path if needed
 # =================================
 

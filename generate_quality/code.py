@@ -1,8 +1,9 @@
 import openai
 import json
+import os
 
 # ===== 配置 =====
-openai.api_key = ""  # 直接明文写API Key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ===== 输入：用之前你给的 HTML 例子 =====
 code_md = """```html
