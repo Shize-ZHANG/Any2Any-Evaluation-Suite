@@ -1,7 +1,7 @@
 # 🧠 Caption Evaluation Pipeline
 
 ## Overview
-This script `caption_eval_pipeline.py` processes multimodal model response JSONL files:
+This script `unified_eval.py` processes multimodal model response JSONL files:
 - Converts all `<imageX>`, `<audioY>`, `<videoZ>` ... tags into detailed captions.
 - Matches each sample with its ground-truth JSONL (which already contains textual captions).
 - Evaluates **semantic correctness** of the generated text using **GPT-4o**, producing a 5-level score in `{0.2, 0.4, 0.6, 0.8, 1.0}`.
@@ -36,7 +36,7 @@ vllm serve model/path
 Expected structure under your project root:
 ```
 project_root/
-├── caption_eval_pipeline.py
+├── unified_eval.py
 ├── environment.yml
 ├── models/
 │   └── PointLLM_7B_v1.2/             # your PointLLM model weights
@@ -59,7 +59,7 @@ project_root/
 
 ### Run the script:
 ```
-python caption_eval_pipeline.py \
+python unified_eval.py \
   --response-path path.jsonl \
   --ground-truth-path path.jsonl \
   (optional)
