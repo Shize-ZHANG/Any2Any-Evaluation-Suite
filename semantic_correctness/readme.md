@@ -24,11 +24,11 @@ export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxx"
 
 ### 3️⃣ (If video or audio) Launch your local vLLM server for Qwen2.5-Omni
 ```
-vllm serve model/path
---dtype auto   
---host localhost   
---trust-remote-code   
---port 8003
+vllm serve model/path \
+--dtype auto \
+--host localhost \
+--trust-remote-code \
+--port 8003 \
 --gpu-memory-utilization 0.7
 ```
 
