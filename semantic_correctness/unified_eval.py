@@ -24,7 +24,7 @@ from openai import OpenAI
 
 # Optional heavy deps: open3d, pandas, matplotlib, etc.
 import torch
-import open3d as o3d
+# import open3d as o3d
 from transformers import AutoTokenizer
 # from pointllm.model import PointLLMLlamaForCausalLM
 # from pointllm.utils import disable_torch_init
@@ -259,7 +259,7 @@ def compute_score(pred: str, ref: str, client) -> float | None:
 
 
 # ========== Main Processing ==========
-def process_item(item, gt_map, openai_client, vllm_client, pointllm_path, assets_root):
+def process_item(item, gt_map, openai_client, vllm_client, pointllm_path, assets_root, vllm_model_name):
     output = item["output"]
     modal_map = output.get("modal", {})
     captions = {}
@@ -271,7 +271,7 @@ def process_item(item, gt_map, openai_client, vllm_client, pointllm_path, assets
             if modality == "image":
                 cap = caption_image(full_path, openai_client)
             elif modality in ["video", "audio"]:
-                cap = caption_video_or_audio(full_path, vllm_client, "qwen2.5-omni-7b")
+                cap = caption_video_or_audio(full_path, vllm_client, vllm_model_name)
             elif modality == "document":
                 cap = caption_document(full_path, openai_client)
             elif modality == "code":
@@ -301,6 +301,9 @@ def main():
     parser.add_argument("--assets-root", default=".")
     parser.add_argument("--pointllm-model-path", default="/mnt/models/PointLLM_7B_v1.2", required=False)
     parser.add_argument("--vllm-endpoint", default="http://127.0.0.1:8003/v1")
+    parser.add_argument("--vllm-model-name", required=True,
+                    help="Model name/id exposed by vLLM (e.g., served-model-name or full path)")
+
     args = parser.parse_args()
 
     print(f"[INFO] Loading files ...")
@@ -315,7 +318,7 @@ def main():
     for item in tqdm(response_data, desc="Processing"):
         processed = process_item(
             item, gt_map, openai_client, vllm_client,
-            args.pointllm_model_path, args.assets_root)
+            args.pointllm_model_path, args.assets_root, args.vllm_model_name)
         results.append(processed)
 
     out_path = args.response_path.replace(".jsonl", ".caption_scored.jsonl")
