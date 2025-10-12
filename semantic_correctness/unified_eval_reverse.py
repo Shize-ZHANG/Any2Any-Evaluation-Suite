@@ -24,7 +24,7 @@ from openai import OpenAI
 
 # Optional heavy deps
 import torch
-import open3d as o3d
+# import open3d as o3d
 from transformers import AutoTokenizer
 # from pointllm.model import PointLLMLlamaForCausalLM
 # from pointllm.utils import disable_torch_init
@@ -268,7 +268,7 @@ def compute_score(pred: str, ref: str, client) -> float | None:
 
 
 # ========== Pair processing (shared) ==========
-def caption_response_item(response_item, openai_client, vllm_client, pointllm_path, assets_root):
+def caption_response_item(response_item, openai_client, vllm_client, pointllm_path, assets_root, vllm_model_name):
     """Generate captions for response_item['output'] and return captioned text."""
     output = response_item["output"]
     modal_map = output.get("modal", {})
@@ -281,7 +281,7 @@ def caption_response_item(response_item, openai_client, vllm_client, pointllm_pa
             if modality == "image":
                 cap = caption_image(full_path, openai_client)
             elif modality in ["video", "audio"]:
-                cap = caption_video_or_audio(full_path, vllm_client, "qwen2.5-omni-7b")
+                cap = caption_video_or_audio(full_path, vllm_client, vllm_model_name)
             elif modality == "document":
                 cap = caption_document(full_path, openai_client)
             elif modality == "code":
@@ -298,9 +298,9 @@ def caption_response_item(response_item, openai_client, vllm_client, pointllm_pa
     return captioned_text
 
 
-def process_pair(response_item, gt_item, openai_client, vllm_client, pointllm_path, assets_root):
+def process_pair(response_item, gt_item, openai_client, vllm_client, pointllm_path, assets_root, vllm_model_name):
     """Caption response, score against GT, and return the augmented response item."""
-    captioned_text = caption_response_item(response_item, openai_client, vllm_client, pointllm_path, assets_root)
+    captioned_text = caption_response_item(response_item, openai_client, vllm_client, pointllm_path, assets_root, vllm_model_name)
     gt_text = gt_item["output"]["content"] if gt_item else ""
     score = compute_score(captioned_text, gt_text, openai_client) if gt_item else None
 
@@ -319,6 +319,8 @@ def main():
     parser.add_argument("--assets-root", default=".")
     parser.add_argument("--pointllm-model-path", default="/mnt/models/PointLLM_7B_v1.2", required=False)
     parser.add_argument("--vllm-endpoint", default="http://127.0.0.1:8003/v1")
+    parser.add_argument("--vllm-model-name", required=True,
+                    help="Model name/id exposed by vLLM (e.g., served-model-name or full path)")
     parser.add_argument("--traverse-mode", choices=["response", "gt"], default="gt",
                         help="Traversal order: iterate response (default) or iterate ground-truth then match response.")
     args = parser.parse_args()
@@ -342,14 +344,14 @@ def main():
             gt_item = gt_map.get(item["id"])
             if not gt_item:
                 # skip or record with score=None; here we keep it and score=None
-                captioned = caption_response_item(item, openai_client, vllm_client, args.pointllm_model_path, args.assets_root)
+                captioned = caption_response_item(item, openai_client, vllm_client, args.pointllm_model_path, args.assets_root, args.vllm_model_name)
                 out_item = json.loads(json.dumps(item, ensure_ascii=False))
                 out_item["output"]["captioned_response"] = captioned
                 out_item["output"]["score"] = None
                 results.append(out_item)
                 continue
 
-            out_item = process_pair(item, gt_item, openai_client, vllm_client, args.pointllm_model_path, args.assets_root)
+            out_item = process_pair(item, gt_item, openai_client, vllm_client, args.pointllm_model_path, args.assets_root, args.vllm_model_name)
             results.append(out_item)
 
         out_path = args.response_path.replace(".jsonl", ".caption_scored.jsonl")
@@ -361,7 +363,7 @@ def main():
             if not resp_item:
                 # strictly follow your spec: only process when matched; otherwise skip
                 continue
-            out_item = process_pair(resp_item, gt_item, openai_client, vllm_client, args.pointllm_model_path, args.assets_root)
+            out_item = process_pair(resp_item, gt_item, openai_client, vllm_client, args.pointllm_model_path, args.assets_root, args.vllm_model_name)
             results.append(out_item)
 
         out_path = args.response_path.replace(".jsonl", ".caption_scored.traverse_gt.jsonl")
