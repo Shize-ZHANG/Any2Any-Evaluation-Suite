@@ -329,9 +329,9 @@ Output ONLY a JSON object with this format:
 {{"overall_score_100": <int>}}
 """
 
-        # Call GPT-4o
+        # Call gpt-5-mini
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             messages=[
                 {"role": "system", "content": "You are a document quality evaluator."},
                 {"role": "user", "content": prompt}
@@ -349,7 +349,7 @@ Output ONLY a JSON object with this format:
 
 
 def evaluate_text(content):
-    """Evaluate text quality using GPT-4o"""
+    """Evaluate text quality using gpt-5-mini"""
     try:
         # Get OpenAI client
         client = get_openai_client()
@@ -383,7 +383,7 @@ Output format (JSON only):
 """
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0
         )
@@ -401,7 +401,7 @@ Output format (JSON only):
 
 
 def evaluate_code(content):
-    """Evaluate code quality using GPT-4o"""
+    """Evaluate code quality using gpt-5-mini"""
     try:
         # Get OpenAI client
         client = get_openai_client()
@@ -435,7 +435,7 @@ Now evaluate the following code:
 """
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0
         )

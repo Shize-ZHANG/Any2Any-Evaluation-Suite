@@ -6,7 +6,7 @@ caption_eval_pipeline.py
 Process multimodal response JSONL:
  - Convert all <tags> in output.content to captions
  - Match ground truth by id
- - Score captioned text vs ground truth using GPT-4o
+ - Score captioned text vs ground truth using gpt-5-mini
  - Output new JSONL with captioned_response + score
 """
 
@@ -88,7 +88,7 @@ def caption_image(path, client):
         ]}
     ]
     resp = client.chat.completions.create(
-        model="gpt-4o", messages=msg, max_tokens=1024, temperature=0)
+        model="gpt-5-mini", messages=msg, max_tokens=1024, temperature=0)
     return resp.choices[0].message.content.strip()
 
 
@@ -122,7 +122,7 @@ def caption_document(path, client):
         ]}
     ]
     resp = client.chat.completions.create(
-        model="gpt-4o", messages=msg, max_tokens=1024, temperature=0)
+        model="gpt-5-mini", messages=msg, max_tokens=1024, temperature=0)
     return resp.choices[0].message.content.strip()
 
 
@@ -193,7 +193,7 @@ def caption_threed(pc_path, model_path, pointnum=8192):
     return txt
 
 
-# ========== GPT-4o scoring ==========
+# ========== gpt-5-mini scoring ==========
 def _bin_score(x: float) -> float:
     """Map any float in [0,1] to the nearest bin in {0.2,0.4,0.6,0.8,1.0}."""
     bins = [0.2, 0.4, 0.6, 0.8, 1.0]
@@ -229,7 +229,7 @@ def compute_score(pred: str, ref: str, client) -> float | None:
     )
 
     resp = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5-mini",
         response_format={"type": "json_object"},  # force pure JSON
         temperature=0,
         messages=[
