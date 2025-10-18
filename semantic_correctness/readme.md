@@ -25,7 +25,6 @@ export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxx"
 ### 3️⃣ (If video or audio) Launch your local vLLM server for Qwen2.5-Omni
 ```
 vllm serve model/path \
---vllm-model-name Qwen/Qwen2.5-Omni-3B \
 --dtype auto \
 --host localhost \
 --trust-remote-code \
@@ -63,6 +62,7 @@ project_root/
 python unified_eval_reverse.py \
   --response-path path.jsonl \
   --ground-truth-path path.jsonl \
+  --vllm-model-name Qwen/Qwen2.5-Omni-3B \
   (optional)
   --pointllm-model-path models/PointLLM_7B_v1.2 \
   --vllm-endpoint http://127.0.0.1:8003/v1
