@@ -236,7 +236,7 @@ def compute_score(pred: str, ref: str, client) -> float | None:
         "- 0.4: Low correctness. <50% key facts match. Important errors/contradictions/confusions (numbers/entities), or the core conclusion drifts, but still loosely on topic.\n"
         "- 0.2: Nearly incorrect/irrelevant. Mostly wrong/missing/contradictory, hallucinated, or non-answers.\n\n"
         "- 0.0: Completely incorrect or empty. Candidate is blank, gibberish, or entirely unrelated.\n\n"
-        "Return STRICT JSON only: {\"score\": 0.2|0.4|0.6|0.8|1.0}\n\n"
+        "Return STRICT JSON only: {\"score\": 0.0|0.2|0.4|0.6|0.8|1.0}\n\n"
         f"<<<BEGIN_PRED>>>\n{pred}\n<<<END_PRED>>>\n\n"
         f"<<<BEGIN_REF>>>\n{ref}\n<<<END_REF>>>"
     )
