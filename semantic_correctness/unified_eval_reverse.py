@@ -109,7 +109,7 @@ def make_openai_clients(vllm_base: str):
 
 def caption_image(path_or_url: str, client_openai: OpenAI) -> str:
     """
-    图片 → dense caption（用 GPT-4o；本地文件转 base64，URL 直接传）
+    图片 → dense caption（用 gpt-5-mini；本地文件转 base64，URL 直接传）
     """
     try:
         if is_url(path_or_url):
@@ -124,10 +124,9 @@ def caption_image(path_or_url: str, client_openai: OpenAI) -> str:
             content_block
         ]}]
         resp = client_openai.chat.completions.create(
-            model="gpt-4o",
-            messages=msg,
-            temperature=0,
-            max_tokens=1024
+            model="gpt-5-mini",
+            messages=msg,            
+            max_completion_tokens=1024
         )
         return (resp.choices[0].message.content or "").strip()
     except Exception as e:
@@ -155,9 +154,8 @@ def caption_document(path_or_url: str, client_openai: OpenAI) -> str:
             {"type": "image_url", "image_url": {"url": f"data:application/octet-stream;base64,{b64}"}}
         ]}]
         resp = client_openai.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             messages=msg,
-            temperature=0,
             max_tokens=1024
         )
         return (resp.choices[0].message.content or "").strip()
@@ -274,13 +272,17 @@ def caption_av_vllm(path_or_url: str, vllm_client: OpenAI, model_name: str, kind
         return f"[ERROR_CAPTION:{e}]"
 
 
-# ========== GPT-4o scoring ==========
+# ========== gpt-5-mini scoring ==========
 def _bin_score(x: float):
-    """Map float in [0,1] to nearest of {0.2,0.4,0.6,0.8,1.0}."""
-    bins = [0.2, 0.4, 0.6, 0.8, 1.0]
+    """Map float in [0,1] to nearest of {0.0,0.2,0.4,0.6,0.8,1.0}."""
+    bins = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
     if x is None:
         return None
-    x = max(0.0, min(1.0, float(x)))
+    try:
+        x = float(x)
+    except Exception:
+        return None
+    x = max(0.0, min(1.0, x))
     return min(bins, key=lambda b: abs(b - x))
 
 
@@ -293,7 +295,7 @@ def compute_score(pred: str, ref: str, client_openai: OpenAI):
         "comparative relations, causal/temporal conditions must remain semantically equivalent. "
         "If there are core factual errors, contradictions, hallucinations, or key omissions, "
         "lower the score. Return ONLY a JSON object with a single key 'score', whose value "
-        "MUST be one of: 0.2, 0.4, 0.6, 0.8, 1.0."
+        "MUST be one of: 0.0, 0.2, 0.4, 0.6, 0.8, 1.0."
     )
 
     user = (
@@ -305,14 +307,15 @@ def compute_score(pred: str, ref: str, client_openai: OpenAI):
         "- 0.6: Partially correct. Roughly half key facts correct. Noticeable omissions or minor contradictions/misinterpretations, but the main conclusion is not fully overturned.\n"
         "- 0.4: Low correctness. <50% key facts match. Important errors/contradictions/confusions (numbers/entities), or the core conclusion drifts, but still loosely on topic.\n"
         "- 0.2: Nearly incorrect/irrelevant. Mostly wrong/missing/contradictory, hallucinated, or non-answers.\n\n"
-        "Return STRICT JSON only: {\"score\": 0.2|0.4|0.6|0.8|1.0}\n\n"
+        "- 0.0: Completely incorrect/irrelevant. Off-topic or contradicts core facts; essentially no overlap with the reference.\n\n"
+        "Return STRICT JSON only: {\"score\": 0.0|0.2|0.4|0.6|0.8|1.0}\n\n"
         f"<<<BEGIN_PRED>>>\n{pred}\n<<<END_PRED>>>\n\n"
         f"<<<BEGIN_REF>>>\n{ref}\n<<<END_REF>>>"
     )
 
     try:
         resp = client_openai.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             response_format={"type": "json_object"},
             temperature=0,
             messages=[{"role": "system", "content": system},
@@ -332,7 +335,7 @@ def compute_score(pred: str, ref: str, client_openai: OpenAI):
     except Exception as e:
         # 兜底正则提取
         try:
-            m = re.search(r"(?<!\d)(?:1(?:\.0+)?|0?\.\d+)(?!\d)", str(e))
+            m = re.search(r"(?<!\d)(?:0(?:\.0+)?|1(?:\.0+)?|0?\.\d+)(?!\d)", content)
             return _bin_score(float(m.group(0))) if m else None
         except Exception:
             return None
@@ -384,6 +387,9 @@ def process_pair(response_item, gt_item, openai_client, vllm_client, pointllm_pa
     gt_text = (gt_item or {}).get("output", {}).get("content", "") if gt_item else ""
     score = compute_score(captioned_text, gt_text, openai_client) if gt_item else None
 
+    if score is None:
+        score = 0.0
+
     item = json.loads(json.dumps(response_item, ensure_ascii=False))
     item.setdefault("output", {})
     item["output"]["captioned_response"] = captioned_text
@@ -401,7 +407,7 @@ def main():
 
     parser.add_argument("--vllm-endpoint", default="http://127.0.0.1:8009/v1",
                         help="OpenAI-compatible endpoint served by vLLM, e.g., http://host:port/v1")
-    parser.add_argument("--vllm-model-name", default="Qwen/Qwen2.5-Omni-3B", required=False,
+    parser.add_argument("--vllm-model-name",  default="Qwen/Qwen2.5-Omni-3B", required=False,
                         help="Model name/id exposed by vLLM (served-model-name or path)")
     parser.add_argument("--traverse-mode", choices=["response", "gt"], default="gt",
                         help="Traversal order: iterate ground-truth (default) or iterate response.")
