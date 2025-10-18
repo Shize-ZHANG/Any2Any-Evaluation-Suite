@@ -285,30 +285,51 @@ def _bin_score(x: float):
     x = max(0.0, min(1.0, x))
     return min(bins, key=lambda b: abs(b - x))
 
+import json, re
 
-def compute_score(pred: str, ref: str, client_openai: OpenAI):
+def compute_score(pred: str, ref: str, client_openai):
+    """
+    语义一致性（1–5档）评分：更侧重“是否满足任务意图/语义要求”，
+    不强制与参考中的具体实体一一对应，除非题面/参考明确要求唯一性或精确名单。
+    返回 1..5 的整数。
+    """
+
     system = (
-        "You are a strict automatic grader. Evaluate only semantic correctness. "
-        "Ignore coherence, style, tone, length, politeness, formatting. "
-        "Treat paraphrases, wording changes, ordering changes, and unit conversions as equivalent "
-        "if they preserve meaning. Numbers may be mildly rounded, but the value/unit/range, "
-        "comparative relations, causal/temporal conditions must remain semantically equivalent. "
-        "If there are core factual errors, contradictions, hallucinations, or key omissions, "
-        "lower the score. Return ONLY a JSON object with a single key 'score', whose value "
-        "MUST be one of: 0.0, 0.2, 0.4, 0.6, 0.8, 1.0."
+        "You are a strict but intention-aware grader for semantic consistency. "
+        "Evaluate whether the Candidate (Pred) satisfies the task intent and semantic constraints "
+        "expressed by the Reference (Ref). "
+        "Ignore style, fluency, tone, politeness, formatting, and layout. "
+        "Treat as equivalent: paraphrases, reordering, mild numeric rounding, unit conversions, "
+        "synonyms, hypernym/hyponym substitutions (category↔exemplar), and alternative but correct exemplars "
+        "from the same valid set (e.g., representative American foods: hamburger, fries, hot dog). "
+        "Require strict entity alignment ONLY when the intent/Ref explicitly demands unique identity, "
+        "exact names, exact counts/order, roles, or closed lists (e.g., 'exactly two authors: X and Y'). "
+        "Consider lists in Ref as NON-EXHAUSTIVE unless they explicitly say 'must include'/'only'/'exactly N'. "
+        "Penalize contradictions, violation of explicit constraints (wrong entity/category/country/time), "
+        "and key omissions that make the main conclusion invalid. "
+        "Return ONLY a JSON object with key 'score' and value in {5,4,3,2,1}."
     )
 
     user = (
-        "Score the semantic correctness of the Candidate (Pred) relative to the Reference (Ref).\n"
-        "Ignore style/fluency/tone/format. Focus ONLY on factual/semantic agreement and key-point coverage.\n\n"
-        "Scoring rubric (choose exactly ONE value):\n"
-        "- 1.0: Completely equivalent. All key facts correct/covered. No contradictions. Units/ranges/relations match (paraphrase/ordering/rounding OK).\n"
-        "- 0.8: Almost equivalent. ≥90% key facts correct/covered. No major contradiction. Only minor omissions/ambiguity that do not affect the main conclusion.\n"
-        "- 0.6: Partially correct. Roughly half key facts correct. Noticeable omissions or minor contradictions/misinterpretations, but the main conclusion is not fully overturned.\n"
-        "- 0.4: Low correctness. <50% key facts match. Important errors/contradictions/confusions (numbers/entities), or the core conclusion drifts, but still loosely on topic.\n"
-        "- 0.2: Nearly incorrect/irrelevant. Mostly wrong/missing/contradictory, hallucinated, or non-answers.\n\n"
-        "- 0.0: Completely incorrect/irrelevant. Off-topic or contradicts core facts; essentially no overlap with the reference.\n\n"
-        "Return STRICT JSON only: {\"score\": 0.0|0.2|0.4|0.6|0.8|1.0}\n\n"
+        "Score semantic consistency of Pred relative to Ref by choosing EXACTLY ONE value.\n\n"
+        "Equivalence policy:\n"
+        "- Alternative-but-correct exemplars from the same valid set are acceptable "
+        "(e.g., Q: 'Name a representative American food.' Ref: 'hamburger'; Pred: 'fries' → treat as equivalent).\n"
+        "- Category↔exemplar and synonym substitutions are acceptable if intent is preserved.\n"
+        "- Enforce strict entity identity ONLY if the prompt/Ref specifies unique names, exact counts/order, roles, or closed lists.\n"
+        "- Assume enumerations in Ref are NON-EXHAUSTIVE unless it says 'must include/only/exactly'.\n\n"
+        "Rubric (5 = best, 1 = worst):\n"
+        "- 5: Fully satisfies intent and preserves all explicit constraints; no contradictions. "
+        "Key facts/relations are correct, allowing alternative correct exemplars or category↔exemplar shifts.\n"
+        "- 4: Nearly satisfies intent with only minor non-critical gaps or imprecision; main conclusion unchanged; "
+        "no major constraint violations.\n"
+        "- 3: Partially satisfies intent. About half of key requirements covered; notable omissions or local "
+        "misunderstandings; main conclusion only partially supported.\n"
+        "- 2: Low consistency. Few correct points; most requirements unmet or important contradictions/constraint violations; "
+        "main conclusion mostly invalid.\n"
+        "- 1: Wholly inconsistent/irrelevant. Opposes core facts/intent or almost no semantic overlap; "
+        "empty/meaningless answers also receive 1.\n\n"
+        "Return STRICT JSON only: {\"score\": 5|4|3|2|1}\n\n"
         f"<<<BEGIN_PRED>>>\n{pred}\n<<<END_PRED>>>\n\n"
         f"<<<BEGIN_REF>>>\n{ref}\n<<<END_REF>>>"
     )
@@ -317,27 +338,46 @@ def compute_score(pred: str, ref: str, client_openai: OpenAI):
         resp = client_openai.chat.completions.create(
             model="gpt-5-mini",
             response_format={"type": "json_object"},
-            messages=[{"role": "system", "content": system},
-                      {"role": "user", "content": user}],
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
         )
-        content = resp.choices[0].message.content
-        data = json.loads(content)
+
+        raw_output = (resp.choices[0].message.content or "").strip()
+        print("\n========== [RAW GPT OUTPUT] ==========")
+        print(raw_output)
+        print("======================================\n")
+
+        data = json.loads(raw_output)
         score = data.get("score", None)
-        if isinstance(score, (int, float)):
-            return _bin_score(score)
+
+        # 只接受 1..5
+        if isinstance(score, (int, float)) and float(score).is_integer():
+            si = int(score)
+            if 1 <= si <= 5:
+                return si
         if isinstance(score, str):
-            try:
-                return _bin_score(float(score))
-            except Exception:
-                return None
-        return None
+            m = re.search(r"\b([1-5])\b", score.strip())
+            if m:
+                return int(m.group(1))
+
+        # 兜底：从原文抓 1..5
+        m2 = re.search(r"\b([1-5])\b", raw_output)
+        return int(m2.group(1)) if m2 else None
+
     except Exception as e:
-        # 兜底正则提取
+        print(f"[ERROR][compute_score] Exception: {e}")
         try:
-            m = re.search(r"(?<!\d)(?:0(?:\.0+)?|1(?:\.0+)?|0?\.\d+)(?!\d)", content)
-            return _bin_score(float(m.group(0))) if m else None
+            print(f"[ERROR][compute_score] raw content: {raw_output}")
+        except Exception:
+            pass
+        try:
+            m = re.search(r"\b([1-5])\b", str(e))
+            return int(m.group(1)) if m else None
         except Exception:
             return None
+
 
 
 # ========== Pair processing (shared) ==========
@@ -385,9 +425,6 @@ def process_pair(response_item, gt_item, openai_client, vllm_client, pointllm_pa
     captioned_text = caption_response_item(response_item, openai_client, vllm_client, pointllm_path, assets_root, vllm_model_name)
     gt_text = (gt_item or {}).get("output", {}).get("content", "") if gt_item else ""
     score = compute_score(captioned_text, gt_text, openai_client) if gt_item else None
-
-    if score is None:
-        score = 0.0
 
     item = json.loads(json.dumps(response_item, ensure_ascii=False))
     item.setdefault("output", {})
