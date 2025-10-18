@@ -223,7 +223,7 @@ def compute_score(pred: str, ref: str, client) -> float | None:
         "comparative relations, causal/temporal conditions must remain semantically equivalent. "
         "If there are core factual errors, contradictions, hallucinations, or key omissions, "
         "lower the score. Return ONLY a JSON object with a single key 'score', whose value "
-        "MUST be one of: 0.2, 0.4, 0.6, 0.8, 1.0."
+        "MUST be one of: 0.0, 0.2, 0.4, 0.6, 0.8, 1.0."
     )
 
     user = (
@@ -235,6 +235,7 @@ def compute_score(pred: str, ref: str, client) -> float | None:
         "- 0.6: Partially correct. Roughly half key facts correct. Noticeable omissions or minor contradictions/misinterpretations, but the main conclusion is not fully overturned.\n"
         "- 0.4: Low correctness. <50% key facts match. Important errors/contradictions/confusions (numbers/entities), or the core conclusion drifts, but still loosely on topic.\n"
         "- 0.2: Nearly incorrect/irrelevant. Mostly wrong/missing/contradictory, hallucinated, or non-answers.\n\n"
+        "- 0.0: Completely incorrect or empty. Candidate is blank, gibberish, or entirely unrelated.\n\n"
         "Return STRICT JSON only: {\"score\": 0.2|0.4|0.6|0.8|1.0}\n\n"
         f"<<<BEGIN_PRED>>>\n{pred}\n<<<END_PRED>>>\n\n"
         f"<<<BEGIN_REF>>>\n{ref}\n<<<END_REF>>>"
