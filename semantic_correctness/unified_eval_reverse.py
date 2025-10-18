@@ -320,7 +320,7 @@ def main():
     parser.add_argument("--assets-root", default=".")
     parser.add_argument("--pointllm-model-path", default="/mnt/models/PointLLM_7B_v1.2", required=False)
     parser.add_argument("--vllm-endpoint", default="http://127.0.0.1:8003/v1")
-    parser.add_argument("--vllm-model-name", required=True,
+    parser.add_argument("--vllm-model-name", default = "Qwen/Qwen2.5-Omni-3B", required=False,
                     help="Model name/id exposed by vLLM (e.g., served-model-name or full path)")
     parser.add_argument("--traverse-mode", choices=["response", "gt"], default="gt",
                         help="Traversal order: iterate response (default) or iterate ground-truth then match response.")

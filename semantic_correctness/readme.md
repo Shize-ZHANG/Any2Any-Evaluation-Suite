@@ -25,7 +25,7 @@ export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxx"
 ### 3️⃣ (If video or audio) Launch your local vLLM server for Qwen2.5-Omni
 ```
 vllm serve model/path \
---vllm-model-name local/model/path \
+--vllm-model-name Qwen/Qwen2.5-Omni-3B \
 --dtype auto \
 --host localhost \
 --trust-remote-code \
